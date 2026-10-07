@@ -11,7 +11,7 @@ DCOL = {"PRIORITIZE": C["blue"], "INVESTIGATE": C["gold"], "MAINTAIN": C["grey"]
 ORDER = {"PRIORITIZE": 0, "INVESTIGATE": 1, "MAINTAIN": 2}
 
 
-def _lvl_internal(d): return "HIGH" if d >= 0.474 else ("MEDIUM" if d >= 0.33 else "LOW")          # Romano et al. thresholds for Cliff's δ
+def _lvl_internal(m): return {"Strong": "HIGH", "Moderate": "MEDIUM"}.get(m, "LOW")   # notebook rule: Strong = δ ≥ 0.33 and CI > 0
 def _lvl_market(m): return {"Premium": "HIGH", "Neutral": "MEDIUM"}.get(m, "LOW")                    # premium in 6/6 specs / neutral / discount in 6/6
 def _lvl_head(h): return "HIGH" if h >= 60 else ("MEDIUM" if h >= 45 else "LOW")                    # % of juniors below the 5.0 ceiling
 
@@ -22,7 +22,7 @@ def rows(results):
         d = DECISION.get(m["verdict_display"], "INVESTIGATE")
         r = dict(key=m["key"], name=LABEL[m["key"]], decision=d, verdict=m["verdict_display"], delta=m["delta"], OR=m["OR_primary"], market=m["market"],
                  headroom=m["headroom"], Ek=m["Ek"], Ek_lo=m["Ek_lo"], Ek_hi=m["Ek_hi"],
-                 li=_lvl_internal(m["delta"]), lm=_lvl_market(m["market"]), lh=_lvl_head(m["headroom"]))
+                 li=_lvl_internal(m.get("internal")), lm=_lvl_market(m["market"]), lh=_lvl_head(m["headroom"]))
         r["conflict"] = (r["li"] != "LOW" and r["lm"] == "LOW") or (r["li"] == "LOW" and r["lm"] == "HIGH")   # directions disagree
         r["why"] = why(r); out.append(r)
     out.sort(key=lambda r: (ORDER[r["decision"]], -r["Ek"]))
@@ -30,13 +30,13 @@ def rows(results):
 
 
 def why(r):
-    i = {"HIGH": "Strong internal association", "MEDIUM": "Moderate internal association", "LOW": "Weak internal association"}[r["li"]] + f" (δ {r['delta']:.2f})"
+    i = {"HIGH": "Strong internal association", "MEDIUM": "Moderate internal association", "LOW": "No significant internal association"}[r["li"]] + f" (δ {r['delta']:.2f})"
     m = {"HIGH": f"a market premium (odds ratio {r['OR']:.2f}, significant in 6/6 models)", "MEDIUM": f"no reliable market premium (OR {r['OR']:.2f})",
          "LOW": f"a market discount (OR {r['OR']:.2f}, in 6/6 models)"}[r["lm"]]
     h = f"{r['headroom']:.0f}% of juniors still below the ceiling"
     if r["decision"] == "PRIORITIZE": return f"{i} + {m} + {h}. Signals converge."
-    if r["decision"] == "MAINTAIN": return f"{i}. High headroom alone is not a reason to invest: {h}, but the internal link is not significant."
-    return f"{i}, but {m}. Signals conflict: the discount is carried by MIS-reporting roles, so invest in analytical communication, not report-making."
+    if r["decision"] == "MAINTAIN": return f"{i}. High headroom alone is not a reason to invest: {h}, but the univariate internal link is not significant; revisit with more data."
+    return f"{i}, but {m}. Signals conflict: the discount sits with MIS/reporting keywords (visualisation alone is neutral), so reframe toward analytical communication."
 
 
 def hero_3d(height=430):
@@ -108,8 +108,8 @@ def convergence(b):
                   f"<div class='ex-row'><span>Internal</span>{lchip(r['li'])}</div><div class='ex-row'><span>Market</span>{lchip(r['lm'])}</div><div class='ex-row'><span>Headroom</span>{lchip(r['lh'])}</div>"
                   f"<div class='ex-arrow'>↓</div><div style='text-align:center'>{dchip(r['decision'])}</div>"
                   f"<div class='nd-sub' style='margin-top:8px'>{'⚑ conflict · ' if r['conflict'] else ''}{ui.esc(r['why'])}</div></div>")
-    ui.md("<div class='nd-sub' style='margin-top:6px'>Levels: internal = Cliff's δ ≥ 0.474 HIGH, ≥ 0.33 MEDIUM (Romano thresholds) · market = premium / neutral / discount across 6 ordinal-logit specifications · "
-          "headroom = share of juniors below the 5.0 ceiling, ≥ 60% HIGH, ≥ 45% MEDIUM. Decisions are the notebook verdicts (FUND → PRIORITIZE, FUND WITH REFRAME → INVESTIGATE, DEPRIORITISE → MAINTAIN).</div>")
+    ui.md("<div class='nd-sub' style='margin-top:6px'>Levels: internal = the decision rule (HIGH: δ ≥ 0.33 with 95% CI above 0; LOW: not significant after Holm or δ < 0.147) · market = premium / neutral / discount across 6 ordinal-logit specifications · "
+          "headroom = share of juniors below the 5.0 ceiling, ≥ 60% HIGH, 45–60% MEDIUM, < 45% LOW. Decisions are the notebook verdicts (FUND → PRIORITIZE, FUND WITH REFRAME → INVESTIGATE, DEPRIORITISE → MAINTAIN).</div>")
 
 
 def _fig(h=300):
@@ -130,7 +130,7 @@ def insights(b):
         f.add_trace(go_.Scatter(x=[r["OR"]], y=[r["delta"]], mode="markers+text", text=[SHORT[r["key"]]], textposition="top center",
                                 marker=dict(size=12 + r["headroom"] / 5, color=DCOL[r["decision"]], line=dict(color="#fff", width=1.5)),
                                 hovertemplate=f"{r['name']}<br>internal δ {r['delta']:.2f}<br>market OR {r['OR']:.2f}<br>headroom {r['headroom']:.0f}%<br>{r['decision']}<extra></extra>"))
-    f.update_xaxes(title="Market evidence — odds ratio of ≥ 10 LPA band (all controls)", range=[0.55, 2.1], gridcolor=C["line"]); f.update_yaxes(title="Internal evidence — Cliff's δ", range=[0, 0.8], gridcolor=C["line"])
+    f.update_xaxes(title="Market evidence — odds ratio for a higher salary band (all controls)", range=[0.55, 2.1], gridcolor=C["line"]); f.update_yaxes(title="Internal evidence — Cliff's δ", range=[0, 0.8], gridcolor=C["line"])
     st.plotly_chart(f, width="stretch", config={"displayModeBar": False}, key="ex_cm")
     ui.md("<div class='nd-sub'>Bubble size = headroom. Dotted lines: OR = 1 (no market effect) and δ = 0.33 (medium internal effect).</div>")
     L, Rr = st.columns(2, gap="large")
@@ -145,7 +145,7 @@ def insights(b):
         mk = sorted(R_, key=lambda r: r["OR"]); f = _fig(280)
         f.add_trace(go_.Bar(x=[r["OR"] - 1 for r in mk], y=[r["name"] for r in mk], base=1, orientation="h", marker_color=[C["teal"] if r["OR"] > 1 else C["red"] for r in mk],
                             text=[f"{r['OR']:.2f}" for r in mk], textposition="outside"))
-        f.add_vline(x=1, line=dict(color=C["ink"], width=1)); f.update_xaxes(title="Odds ratio of a ≥ 10 LPA posting (1 = no effect)", range=[0.6, 1.75]); st.plotly_chart(f, width="stretch", config={"displayModeBar": False}, key="ex_mkt")
+        f.add_vline(x=1, line=dict(color=C["ink"], width=1)); f.update_xaxes(title="Odds ratio for a higher salary band (1 = no effect)", range=[0.6, 1.75]); st.plotly_chart(f, width="stretch", config={"displayModeBar": False}, key="ex_mkt")
     L, Rr = st.columns(2, gap="large")
     with L:
         ui.md("<div class='ex-sec'>CAPABILITY vs SALARY BAND</div>")
