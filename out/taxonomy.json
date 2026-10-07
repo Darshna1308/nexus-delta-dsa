@@ -1,0 +1,50 @@
+{
+ "TAX": {
+  "big_data": "hadoop|spark|hive|big data|bigdata|pyspark|kafka|hbase|mapreduce|nosql|cassandra|mongodb|data lake|\\bhdfs\\b",
+  "maths_stats": "statistic|regression|forecast|probabilit|hypothesis|\\bsas\\b|spss|econometric|optimi[sz]ation|operations research|mathemat|time series|\\banova\\b|predictive model|a/b test",
+  "coding": "python|\\bjava\\b|\\bscala\\b|c\\+\\+|\\bsql\\b|programming|javascript|\\bperl\\b|\\bruby\\b|\\bgolang\\b|\\br\\b programming|\\br\\b,|, r,|\\bpandas\\b",
+  "ai_ml": "machine learning|\\bml\\b|deep learning|\\bnlp\\b|tensorflow|pytorch|neural|artificial intelligence|\\bai\\b|computer vision|scikit|keras|data scien|\\bllm\\b|natural language",
+  "viz": "tableau|power ?bi|powerbi|qlik|visuali[sz]|dashboard|looker|data studio|\\bd3\\b|spotfire|storytell|\\bcognos\\b",
+  "mis": "\\bmis\\b|reporting|\\breports?\\b|excel|\\bvba\\b|business objects|crystal report"
+ },
+ "DATA_ROLE_P": "data|analy|scien|machine learning|\\bml\\b|\\bai\\b|business intelligence|\\bbi\\b|statistic|insight|quant|research|mis\\b",
+ "DATA_ROLE_W": "data|analy|scien|machine learning|\\bml\\b|\\bai\\b|business intelligence|\\bbi\\b|statistic|insight|quant|research|mis\\b|tableau|power ?bi|hadoop|spark|etl|sas|data mining|predictive|forecast",
+ "SEN": [
+  [
+   "\\bhead\\b|\\bvp\\b|vice president|director|chief|\\bcto\\b|\\bcxo\\b",
+   "head"
+  ],
+  [
+   "principal|architect|\\blead\\b|leader|manager|\\bmgr\\b",
+   "lead_mgr"
+  ],
+  [
+   "senior|\\bsr\\b|\\bsr\\.",
+   "senior"
+  ],
+  [
+   "fresher|trainee|\\bintern\\b|internship|junior|\\bjr\\b|graduate|associate",
+   "junior"
+  ]
+ ],
+ "RF": [
+  [
+   "data scien|machine learning|\\bml\\b|\\bai\\b|deep learning|nlp",
+   "DS_ML"
+  ],
+  [
+   "data engineer|big data|hadoop|etl|data warehouse|spark",
+   "DE"
+  ],
+  [
+   "business analyst|\\bba\\b",
+   "BA"
+  ],
+  [
+   "data analyst|analytics|\\bbi\\b|business intelligence|insight|reporting|\\bmis\\b|analyst",
+   "DA_BI"
+  ]
+ ],
+ "T1": "bengaluru|bangalore|mumbai|delhi|ncr|gurgaon|gurugram|noida|hyderabad|chennai|pune|kolkata|navi mumbai",
+ "FOREIGN": "dubai|singapore|london|usa|united states|new york|san francisco|\\buk\\b|canada|australia|kuala|doha|riyadh|abu dhabi|germany|netherlands|paris|toronto|tokyo|hong kong|saudi|qatar|bahrain|kuwait|oman|ireland|sydney|melbourne|manila|jakarta|nairobi|lagos"
+}

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+shots/
+vault/
+*.key
+.streamlit/secrets.toml
+data/
+.DS_Store
