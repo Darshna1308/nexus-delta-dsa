@@ -157,4 +157,14 @@ for who, page, expect in [("demo_candidate", 8, "CULTURE RATING"), ("demo_org", 
     if who == "demo_org":
         at = clicks(at, "inv_new"); check("org generates invite", at.session_state.get("last_code") and not exc(at), exc(at))
     at = clicks(at, "logout"); check(f"{who} signs out -> login gate", not at.session_state.get("user") and any(b.key == "li_go" for b in at.button))
+# ============================================================ redesign: values preserved on the overview + 3D payloads use real numbers
+at = fresh(); txt = " ".join(m.value for m in at.markdown)
+for v in ["+0.55", "1.27–1.42", "59%", "+0.49", "1.52–1.55", "55%", "+0.36", "1.25–1.38", "51%", "+0.59", "0.75–0.80", "42%", "+0.12", "1.09–1.15", "82%", "14,840", "15,841", "1,001", "FUND WITH REFRAME", "DEPRIORITISE"]:
+    check(f"overview shows {v}", v in txt)
+check("overview shows 96% win-rate", ">96</span>%" in txt or "96%" in txt)
+import viz3d, json as _j
+_R = _j.load(open("out/results.json")); _E = {c["key"]: c for c in viz3d.cap_evidence(_R)}
+check("3D evidence = notebook values", abs(_E["maths_stats"]["delta"] - 0.5506) < 1e-3 and round(_E["story"]["or_lo"], 2) == 0.75 and _E["big_data"]["verdict"] == "DEPRIORITISE" and round(_E["maths_stats"]["p_beat"], 3) == 0.957)
+check("3D city data present", len(_R.get("city_capability", {})) >= 10)
+
 bad = [n for n, ok in results if not ok]; print(f"\n{len(results)-len(bad)}/{len(results)} passed"); sys.exit(1 if bad else 0)

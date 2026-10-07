@@ -9,10 +9,11 @@ BRAND = dict(product="NEXUS DELTA", tagline="Evidence-First Workforce Capability
              team="Team DSA", uni="Chandigarh University", event="Build For Bharat 2.0",
              members=["Anwesha Kar", "Darshna Parihar", "Saamyaraj Baidya"])
 
-# palette: dark navy shell, off-white content, electric-blue primary, teal secondary
-C = dict(navy="#0B1730", navy2="#13244A", navy3="#1D3366", blue="#D9701C", blue_soft="#FBE7D3", teal="#2F8F62", teal_soft="#DDF0E4", gold="#B8963E",
-         paper="#FAF7F0", card="#FFFFFF", ink="#0E1A33", muted="#5B6780", line="#DAD6CB", amber="#C98A1B", amber_soft="#FBEFD3",
-         red="#C4472E", red_soft="#F8DDD6", grey="#8D99AE")
+# palette (colour psychology): ivory workspace · deep indigo for structure/trust · muted teal for evidence · terracotta for action/attention · muted green for growth/FUND · antique gold for rare high-value insight
+# key 'blue' is the ACTION accent (terracotta) for backward compatibility
+C = dict(navy="#16324F", navy2="#1E3F60", navy3="#2A4E72", blue="#C87941", blue_soft="#F4E6D8", teal="#2F5D62", teal_soft="#DCE7E5", green="#5F8065", green_soft="#E3EBE2",
+         gold="#D9A441", paper="#F6F3EC", card="#FBF9F4", ink="#17212B", muted="#68737D", line="#DDD5C6", amber="#B98A2E", amber_soft="#F6EBD3",
+         red="#A84A32", red_soft="#F5E1DA", grey="#8A939B", indigo_soft="#E2E8EE")
 
 CAPS = ["maths_stats", "story", "ai_ml", "coding", "big_data"]            # display order used across the app
 LABEL = {"big_data": "Big Data", "maths_stats": "Maths & Statistics", "coding": "Coding", "ai_ml": "AI & ML", "story": "Dashboards & Storytelling"}

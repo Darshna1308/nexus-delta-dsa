@@ -7,3 +7,4 @@ vault/
 .streamlit/secrets.toml
 data/
 .DS_Store
+node_modules/

@@ -1,15 +1,43 @@
 [theme]
 base = "light"
-primaryColor = "#2F6BFF"
-backgroundColor = "#F5F3EE"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#0E1A33"
-font = "sans serif"
+primaryColor = "#C87941"
+backgroundColor = "#F6F3EC"
+secondaryBackgroundColor = "#EFEAE0"
+textColor = "#17212B"
+font = "IBM Plex Sans, sans-serif"
+codeFont = "IBM Plex Mono, monospace"
+headingFont = "IBM Plex Sans, sans-serif"
+
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-400-normal.woff2"
+weight = 400
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-500-normal.woff2"
+weight = 500
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-600-normal.woff2"
+weight = 600
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-700-normal.woff2"
+weight = 700
+[[theme.fontFaces]]
+family = "IBM Plex Mono"
+url = "app/static/fonts/ibm-plex-mono-latin-400-normal.woff2"
+weight = 400
+[[theme.fontFaces]]
+family = "IBM Plex Mono"
+url = "app/static/fonts/ibm-plex-mono-latin-500-normal.woff2"
+weight = 500
 
 [server]
 headless = true
 enableXsrfProtection = true
 maxUploadSize = 10
+enableStaticServing = true
 
 [browser]
 gatherUsageStats = false

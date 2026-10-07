@@ -3,11 +3,11 @@ All values come from results.json (via decision_engine.build_matrix). Decisions 
 FUND -> PRIORITIZE · FUND WITH REFRAME / TIED / MONITOR -> INVESTIGATE · DEPRIORITISE -> MAINTAIN. Nothing is re-scored here."""
 import streamlit as st
 import plotly.graph_objects as go_
-import ui, decision_engine as de
+import ui, decision_engine as de, viz3d
 from config import C, LABEL, SHORT
 
 DECISION = {"FUND": "PRIORITIZE", "FUND WITH REFRAME": "INVESTIGATE", "TIED": "INVESTIGATE", "MONITOR": "INVESTIGATE", "DEPRIORITISE": "MAINTAIN"}
-DCOL = {"PRIORITIZE": C["blue"], "INVESTIGATE": C["gold"], "MAINTAIN": C["grey"]}
+DCOL = {"PRIORITIZE": C["green"], "INVESTIGATE": C["blue"], "MAINTAIN": C["grey"]}   # green = growth/FUND · terracotta = attention · grey = maintain
 ORDER = {"PRIORITIZE": 0, "INVESTIGATE": 1, "MAINTAIN": 2}
 
 
@@ -58,55 +58,66 @@ if(!red)a+=0.0017}}requestAnimationFrame(f)}}f();</script></body></html>""", hei
 
 def overview(b, go, open_cap):
     with st.container(key="exhero"):
-        L, R = st.columns([1.15, 1], vertical_alignment="center")
+        L, R = st.columns([1, 1.25], vertical_alignment="center", gap="large")
         with L:
-            ui.md("<div class='nd-kicker' style='color:#F4A259'>BUILD FOR BHARAT 2.0 · TEAM DSA</div>"
-                  "<div class='ex-title'>NEXUS DELTA</div><div class='ex-h2'>Evidence-based capability intelligence for the future workforce.</div>"
-                  "<div class='ex-p'>From workforce data to evidence-backed capability decisions — internal evidence, market evidence and capability headroom, weighed separately and never averaged.</div>")
-            c = st.columns([1.2, 1, 1.6])
-            with c[0]: st.button("Explore NEXUS DELTA →", key="cta_explore", type="primary", on_click=go, args=("CAPABILITY INTELLIGENCE",))
-            with c[1]: st.button("View Evidence →", key="cta_evidence", on_click=go, args=("EVIDENCE",))
-        with R: hero_3d()
+            ui.md("<div class='ex-kick'>NEXUS DELTA · evidence intelligence for data science teams</div>"
+                  "<h1 class='ex-h1'>Which capability should your data science team develop next?</h1>"
+                  "<p class='ex-p'>NEXUS DELTA weighs three independent lines of evidence — what separates high performers inside a company, what the Indian job market pays for, and how much room is left to grow — and shows where they disagree.</p>"
+                  "<div class='ex-flow'><span><b>Data</b><i class='num'>15,841 postings · 139 juniors</i></span><em>→</em><span><b>Evidence</b><i class='num'>δ · OR · headroom</i></span><em>→</em>"
+                  "<span><b>Decision</b><i>fund · reframe · deprioritise</i></span><em>→</em><span><b>Development</b><i>role-specific paths</i></span></div>")
+            c = st.columns([1.25, 1, 0.6])
+            with c[0]: st.button("Explore the evidence →", key="cta_explore", type="primary", on_click=go, args=("CAPABILITY INTELLIGENCE",))
+            with c[1]: st.button("How it was built →", key="cta_evidence", on_click=go, args=("EVIDENCE",))
+        with R:
+            if not (b.ok_results and viz3d.india_map(b.results, height=520)): hero_3d()
+            ui.md("<div class='ex-cap'>Data-role postings by city (Analytics Jobs, NB08). Select a capability to see where it is demanded and the evidence behind its decision.</div>")
     if not b.ok_results: return
     with st.container(key="exbody"): _overview_body(b, open_cap)
 
 
 def _overview_body(b, open_cap):
     R_ = rows(b.results); cl = b.results.get("cleaning", {}); dec = b.results.get("decision", {})
+    ev = {c["key"]: c for c in viz3d.cap_evidence(b.results)}
     n_pri = sum(r["decision"] == "PRIORITIZE" for r in R_); n_conf = sum(r["conflict"] for r in R_)
-    cards = [("◇", "CAPABILITIES ANALYSED", len(R_), "", "versioned taxonomy cap-tax-v2.0"),
-             ("◎", "MARKET SIGNALS", cl.get("clean", 0), "", f"job postings after removing {cl.get('dup', 0):,} duplicates"),
-             ("◆", "EVIDENCE CONFIDENCE", round(100 * dec.get("p_beat", 0)), "%", f"top lever wins {dec.get('p_beat', 0)*100:.1f}% of 1,000 bootstrap refits (rule: ≥ 80%)"),
-             ("▲", "PRIORITY CAPABILITIES", n_pri, "", "converging internal + market evidence"),
-             ("⚑", "CONFLICTING SIGNALS", n_conf, "", "internal and market evidence disagree")]
-    ui.md("<div class='ex-cards'>" + "".join(f"<div class='ex-card' style='animation-delay:{i*70}ms'><div class='ex-ic'>{ic}</div><div class='nd-label'>{lab}</div>"
-          f"<div class='ex-num'>{(f'{v:,}' if v >= 1000 else f'<span class=ex-count style=--to:{v}></span>')}{suf}</div><div class='nd-sub'>{sub}</div></div>" for i, (ic, lab, v, suf, sub) in enumerate(cards)) + "</div>")
-    ui.md("<div class='ex-sec'>CAPABILITY PRIORITY</div><div class='nd-sub' style='margin-bottom:10px'>Ranked by decision, then by modelled gain (E<sub>k</sub>, pp per +0.5 step). The bar is the gain; the label is the decision.</div>")
+    cards = [("Capabilities analysed", f"<span class='ex-in'>{len(R_)}</span>", "versioned taxonomy cap-tax-v2.0", ""),
+             ("Market signals", f"{cl.get('clean', 0):,}", f"cleaned postings · {cl.get('raw', 0):,} raw − {cl.get('dup', 0):,} exact duplicates", ""),
+             ("Evidence confidence", f"<span class='ex-in'>{round(100 * dec.get('p_beat', 0))}</span>%", f"bootstrap win-rate of the top capability vs the runner-up ({dec.get('p_beat', 0)*100:.1f}%; rule ≥ 80%)", "gold"),
+             ("Funded capabilities", f"<span class='ex-in'>{n_pri}</span>", "internal and market evidence agree", "green"),
+             ("Evidence conflicts", f"<span class='ex-in'>{n_conf}</span>", "strong inside, discounted outside", "terra")]
+    ui.md("<div class='ex-cards'>" + "".join(f"<div class='ex-card {k}' style='animation-delay:{i*60}ms'><div class='nd-label'>{lab}</div><div class='ex-num num'>{v}</div><div class='nd-sub'>{sub}</div></div>"
+          for i, (lab, v, sub, k) in enumerate(cards)) + "</div>")
+    ui.md("<div class='ex-sec'>Capability priority</div><div class='nd-sub' style='margin-bottom:6px'>What is the decision, why, and what evidence supports it. Ordered by decision, then by modelled gain E<sub>k</sub> (percentage points of P(high hike) per +0.5 step).</div>")
     mx = max(r["Ek"] for r in R_) or 1
     for i, r in enumerate(R_, 1):
+        e = ev.get(r["key"], {})
         with st.container(key=f"exrank_{r['key']}"):
-            c = st.columns([0.35, 2.6, 4.4, 1.1], vertical_alignment="center")
-            c[0].markdown(f"<div class='ex-rk'>{i:02d}</div>", unsafe_allow_html=True)
-            c[1].markdown(f"<div class='ex-nm'>{r['name']}</div>{dchip(r['decision'])}", unsafe_allow_html=True)
-            c[2].markdown(f"<div class='ex-bar'><span style='width:{100*r['Ek']/mx:.0f}%;background:{DCOL[r['decision']]};animation-delay:{i*90}ms'></span></div>"
+            c = st.columns([0.32, 2.3, 4.7, 1.0], vertical_alignment="center")
+            c[0].markdown(f"<div class='ex-rk num'>{i:02d}</div>", unsafe_allow_html=True)
+            c[1].markdown(f"<div class='ex-nm'>{r['name']}</div>{dchip(r)}", unsafe_allow_html=True)
+            strip = (f"<span>δ <b class='num'>{e['delta']:+.2f}</b></span><span>OR <b class='num'>{e['or_lo']:.2f}–{e['or_hi']:.2f}</b></span><span>headroom <b class='num'>{e['headroom']:.0f}%</b></span><span>E<sub>k</sub> <b class='num'>+{r['Ek']:.1f} pp</b></span>") if e else ""
+            c[2].markdown(f"<div class='ex-strip'>{strip}</div><div class='ex-bar'><span style='width:{100*r['Ek']/mx:.0f}%;background:{DCOL[r['decision']]};animation-delay:{i*80}ms'></span></div>"
                           f"<div class='nd-sub'><b>Why?</b> {ui.esc(r['why'])}</div>", unsafe_allow_html=True)
             with c[3]: st.button("Evidence ›", key=f"exwhy_{r['key']}", on_click=open_cap, args=(r["key"],))
 
 
-def dchip(d): return f"<span class='ex-d' style='color:{DCOL[d]};border-color:{DCOL[d]}'>{d}</span>"
+ACTION = {"PRIORITIZE": "prioritize", "INVESTIGATE": "investigate · reframe", "MAINTAIN": "maintain"}
+def dchip(r):
+    """verdict first (as computed by NB06), product action second. Text, not colour alone, carries the meaning."""
+    d = r["decision"]; v = r.get("verdict", d)
+    return f"<span class='ex-d' style='color:{DCOL[d]};border-color:{DCOL[d]}'>{ui.esc(v)}</span><span class='ex-act'>{ACTION[d]}</span>"
 def lchip(l): return f"<span class='ex-l ex-{l.lower()}'>{l}</span>"
 
 
 def convergence(b):
     if not b.ok_results: return
-    ui.md("<div class='ex-sec'>EVIDENCE CONVERGENCE</div><div class='nd-sub' style='margin-bottom:10px'>Three independent signals per capability. NEXUS DELTA does not average them — "
+    ui.md("<div class='ex-sec'>Evidence convergence</div><div class='nd-sub' style='margin-bottom:10px'>Three independent signals per capability. NEXUS DELTA does not average them — "
           "agreement leads to PRIORITIZE, disagreement to INVESTIGATE, a weak internal link to MAINTAIN.</div>")
     R_ = rows(b.results); cols = st.columns(len(R_), gap="small")
     for col, r in zip(cols, R_):
         with col:
             ui.md(f"<div class='ex-conv{' ex-conflict' if r['conflict'] else ''}'><div class='ex-nm' style='font-size:15px'>{r['name']}</div>"
                   f"<div class='ex-row'><span>Internal</span>{lchip(r['li'])}</div><div class='ex-row'><span>Market</span>{lchip(r['lm'])}</div><div class='ex-row'><span>Headroom</span>{lchip(r['lh'])}</div>"
-                  f"<div class='ex-arrow'>↓</div><div style='text-align:center'>{dchip(r['decision'])}</div>"
+                  f"<div class='ex-arrow'>↓</div><div style='text-align:center'>{dchip(r)}</div>"
                   f"<div class='nd-sub' style='margin-top:8px'>{'⚑ conflict · ' if r['conflict'] else ''}{ui.esc(r['why'])}</div></div>")
     ui.md("<div class='nd-sub' style='margin-top:6px'>Levels: internal = the decision rule (HIGH: δ ≥ 0.33 with 95% CI above 0; LOW: not significant after Holm or δ < 0.147) · market = premium / neutral / discount across 6 ordinal-logit specifications · "
           "headroom = share of juniors below the 5.0 ceiling, ≥ 60% HIGH, 45–60% MEDIUM, < 45% LOW. Decisions are the notebook verdicts (FUND → PRIORITIZE, FUND WITH REFRAME → INVESTIGATE, DEPRIORITISE → MAINTAIN).</div>")
@@ -114,13 +125,13 @@ def convergence(b):
 
 def _fig(h=300):
     f = go_.Figure(); f.update_layout(height=h, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                                      font=dict(family="Inter, Segoe UI, sans-serif", size=12, color=C["ink"]), showlegend=False,
+                                      font=dict(family="IBM Plex Sans, Segoe UI, sans-serif", size=12, color=C["ink"]), showlegend=False,
                                       transition=dict(duration=500, easing="cubic-in-out")); return f
 
 
 def insights(b):
     R_ = rows(b.results); res = b.results
-    ui.md("<div class='ex-sec'>EVIDENCE CONFLICT MATRIX</div>")
+    ui.md("<div class='ex-sec'>Evidence conflict matrix</div>")
     f = _fig(380)
     f.add_shape(type="rect", x0=1, x1=2.1, y0=0.33, y1=0.8, fillcolor="rgba(47,143,98,.08)", line_width=0); f.add_shape(type="line", x0=1, x1=1, y0=0, y1=0.8, line=dict(color=C["line"], dash="dot"))
     f.add_shape(type="rect", x0=0.55, x1=1, y0=0.33, y1=0.8, fillcolor="rgba(184,150,62,.10)", line_width=0); f.add_shape(type="line", x0=0.55, x1=2.1, y0=0.33, y1=0.33, line=dict(color=C["line"], dash="dot"))
@@ -135,20 +146,20 @@ def insights(b):
     ui.md("<div class='nd-sub'>Bubble size = headroom. Dotted lines: OR = 1 (no market effect) and δ = 0.33 (medium internal effect).</div>")
     L, Rr = st.columns(2, gap="large")
     with L:
-        ui.md("<div class='ex-sec'>CAPABILITY vs INTERNAL OUTCOMES</div>")
+        ui.md("<div class='ex-sec'>Capability vs internal outcomes</div>")
         eff = sorted(res.get("jds_effects", []), key=lambda e: e["delta"]); f = _fig(280)
         f.add_trace(go_.Scatter(x=[e["delta"] for e in eff], y=[LABEL.get(e["skill"], e["skill"]) for e in eff], mode="markers", marker=dict(size=11, color=C["navy"]),
                                 error_x=dict(type="data", symmetric=False, array=[e["ci_hi"] - e["delta"] for e in eff], arrayminus=[e["delta"] - e["ci_lo"] for e in eff], color=C["grey"])))
         f.add_vline(x=0, line=dict(color=C["line"])); f.update_xaxes(title="Cliff's δ (95% bootstrap CI) · high vs low hike, JDS n = 139"); st.plotly_chart(f, width="stretch", config={"displayModeBar": False}, key="ex_int")
     with Rr:
-        ui.md("<div class='ex-sec'>CAPABILITY vs MARKET DEMAND</div>")
+        ui.md("<div class='ex-sec'>Capability vs market demand</div>")
         mk = sorted(R_, key=lambda r: r["OR"]); f = _fig(280)
         f.add_trace(go_.Bar(x=[r["OR"] - 1 for r in mk], y=[r["name"] for r in mk], base=1, orientation="h", marker_color=[C["teal"] if r["OR"] > 1 else C["red"] for r in mk],
                             text=[f"{r['OR']:.2f}" for r in mk], textposition="outside"))
         f.add_vline(x=1, line=dict(color=C["ink"], width=1)); f.update_xaxes(title="Odds ratio for a higher salary band (1 = no effect)", range=[0.6, 1.75]); st.plotly_chart(f, width="stretch", config={"displayModeBar": False}, key="ex_mkt")
     L, Rr = st.columns(2, gap="large")
     with L:
-        ui.md("<div class='ex-sec'>CAPABILITY vs SALARY BAND</div>")
+        ui.md("<div class='ex-sec'>Capability vs salary band</div>")
         t2 = res.get("t2_demo", []); bands = ["0–3", "3–6", "6–10", "10–15", "15–25", "25–50"]
         if t2:
             f = _fig(280)
@@ -158,7 +169,7 @@ def insights(b):
             st.plotly_chart(f, width="stretch", config={"displayModeBar": False}, key="ex_band")
             ui.md("<div class='nd-sub'>Predicted band distributions for sample job descriptions (selected T2 model: 44% exact band, 85% within one band). Distributions, never an exact salary.</div>")
     with Rr:
-        ui.md("<div class='ex-sec'>CAPABILITY HEADROOM</div>")
+        ui.md("<div class='ex-sec'>Capability headroom</div>")
         ui.md("".join(f"<div class='ex-hr'><span>{r['name']}</span><div class='ex-bar'><span style='width:{r['headroom']:.0f}%;background:{C['gold']}'></span></div><b>{r['headroom']:.0f}%</b></div>"
                       for r in sorted(R_, key=lambda r: -r["headroom"])))
         ui.md("<div class='nd-sub'>Share of juniors (JDS) not yet at the 5.0 ceiling. Headroom is necessary, not sufficient — Big Data has the most room but the weakest internal link.</div>")
@@ -167,7 +178,7 @@ def insights(b):
 def data_quality(b):
     cl = b.results.get("cleaning", {}) if b.ok_results else {}
     if not cl: return
-    ui.md("<div class='ex-sec'>DATA QUALITY · Analytics_Jobs.csv</div>")
+    ui.md("<div class='ex-sec'>Data quality · Analytics_Jobs.csv</div>")
     items = [("Raw records", f"{cl['raw']:,}", "as supplied"), ("Duplicate records", f"{cl['dup']:,}", "exact duplicates removed"),
              ("Truncated skill text", f"{cl['trunc_pct']:.1f}%", "skills field cut off — description text also parsed"),
              ("Missing job type", f"{cl['jobtype_missing_pct']:.1f}%", "field excluded from models"), ("Missing description", f"{cl['desc_missing_raw']:,}", "rows kept; skills field used"),
@@ -187,58 +198,69 @@ def decision_page(b, go):
     R_ = rows(b.results); top = R_[0]; dec = b.results.get("decision", {}); nxt = next((r for r in R_ if r["name"] == dec.get("next") or LABEL.get(r["key"]) == dec.get("next")), R_[1])
     conf = "HIGH" if dec.get("p_beat", 0) >= 0.9 else ("MEDIUM" if dec.get("p_beat", 0) >= 0.8 else "LOW")
     with st.container(key="exdecision"):
-        ui.md(f"<div class='nd-kicker' style='color:#F4A259'>NEXUS DECISION</div><div class='nd-label light' style='margin-top:14px;color:#B8C6E4'>TOP PRIORITY</div>"
-              f"<div class='ex-title' style='font-size:64px'>{top['name']}</div><div style='margin:6px 0 18px 0'>{dchip(top['decision'])}</div>"
-              "<div class='ex-dgrid'>" + "".join(f"<div><div class='nd-label' style='color:#8FA3C9'>{a}</div><div class='ex-dv'>{v}</div><div class='ex-ds'>{s}</div></div>" for a, v, s in [
+        ui.md(f"<div class='ex-kick'>NEXUS decision · top priority</div>"
+              f"<div class='ex-dtitle'>{top['name']}</div><div style='margin:6px 0 18px 0'>{dchip(top)}</div>"
+              "<div class='ex-dgrid'>" + "".join(f"<div><div class='nd-label'>{a}</div><div class='ex-dv'>{v}</div><div class='ex-ds num'>{s}</div></div>" for a, v, s in [
                   ("INTERNAL SUCCESS", top["li"], f"Cliff's δ {top['delta']:.2f}"), ("MARKET DEMAND", top["lm"], f"odds ratio {top['OR']:.2f}, 6/6 models"),
                   ("HEADROOM", top["lh"], f"{top['headroom']:.0f}% of juniors below ceiling"), ("CONFIDENCE", conf, f"beats {nxt['name']} in {dec.get('p_beat', 0)*100:.1f}% of 1,000 refits")]) + "</div>"
-              f"<div class='ex-p' style='margin-top:18px'><b style='color:#fff'>Why?</b> {ui.esc(top['why'])} Modelled gain +{top['Ek']:.1f} pp P(high hike) per +0.5 step [{top['Ek_lo']:.1f}, {top['Ek_hi']:.1f}].</div>")
-    ui.md("<div class='ex-sec'>THE FULL DECISION</div><table class='nd-tbl'><tr><th>#</th><th>Capability</th><th>Decision</th><th>Internal</th><th>Market</th><th>Headroom</th><th>Why</th></tr>" + "".join(
-        f"<tr><td>{i}</td><td><b>{r['name']}</b></td><td>{dchip(r['decision'])}</td><td>{lchip(r['li'])}</td><td>{lchip(r['lm'])}</td><td>{lchip(r['lh'])}</td><td style='font-size:12px'>{ui.esc(r['why'])}</td></tr>"
+              f"<div class='ex-p' style='margin-top:18px'><b>Why?</b> {ui.esc(top['why'])} Modelled gain +{top['Ek']:.1f} pp P(high hike) per +0.5 step [{top['Ek_lo']:.1f}, {top['Ek_hi']:.1f}].</div>")
+    ui.md("<div class='ex-sec'>The full decision</div><table class='nd-tbl'><tr><th>#</th><th>Capability</th><th>Decision</th><th>Internal</th><th>Market</th><th>Headroom</th><th>Why</th></tr>" + "".join(
+        f"<tr><td>{i}</td><td><b>{r['name']}</b></td><td>{dchip(r)}</td><td>{lchip(r['li'])}</td><td>{lchip(r['lm'])}</td><td>{lchip(r['lh'])}</td><td style='font-size:12px'>{ui.esc(r['why'])}</td></tr>"
         for i, r in enumerate(R_, 1)) + "</table>")
     ui.md("<div class='nd-note'>Association evidence from one company (JDS, n = 139) plus 14,840 market postings — not causal. A human makes the final call; ties are declared, not hidden.</div>")
 
 
 CSS = """
-.st-key-exhero {{ background:radial-gradient(1200px 500px at 85% 40%, #1B2E5C 0%, {navy} 60%); padding:0 !important; animation:exfade .6s ease both; }}
+.st-key-exhero {{ background:{paper}; background-image:linear-gradient(rgba(22,50,79,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(22,50,79,.035) 1px, transparent 1px);
+  background-size:28px 28px; padding:0 !important; border-bottom:1px solid {line}; }}
+.st-key-exhero > div {{ max-width:1320px; margin:0 auto; padding:26px 32px 18px 32px; animation:exfade .45s ease both; }}
 .st-key-exbody > div {{ max-width:1320px; margin:0 auto; padding:0 32px; }}
-.st-key-exhero > div {{ max-width:1320px; margin:0 auto; padding:18px 32px 10px 32px; }}
-.ex-title {{ font-family:{serif}; color:#fff; font-size:72px; line-height:1; letter-spacing:.02em; margin:8px 0 10px 0; }}
-.ex-h2 {{ color:#F5F1E8; font-size:24px; line-height:1.3; max-width:620px; font-family:{serif}; }}
-.ex-p {{ color:#B8C6E4; font-size:15px; line-height:1.55; max-width:600px; margin:12px 0 18px 0; }}
-.st-key-exhero button[kind="secondary"] {{ background:transparent !important; color:#F5F1E8 !important; border:1px solid #5C6E96 !important; }}
-.ex-cards {{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:22px 0 26px 0; }} .ex-cards.ex7 {{ grid-template-columns:repeat(7,1fr); }}
-.ex-card {{ background:#fff; border-radius:12px; padding:16px 16px 14px 16px; box-shadow:0 1px 2px rgba(14,26,51,.06),0 6px 18px rgba(14,26,51,.05); transition:transform .25s, box-shadow .25s; animation:exup .55s ease both; position:relative; }}
-.ex-card:hover {{ transform:translateY(-3px); box-shadow:0 2px 4px rgba(14,26,51,.08),0 14px 28px rgba(14,26,51,.09); }}
-.ex-ic {{ position:absolute; right:14px; top:12px; color:{saffron}; font-size:16px; opacity:.8; }}
-.ex-num {{ font-family:{serif}; font-size:38px; color:{ink}; line-height:1.1; margin:4px 0 2px 0; }}
+.ex-kick {{ font-size:12px; font-weight:600; color:{teal}; letter-spacing:.04em; margin-bottom:10px; }}
+[data-testid="stMarkdownContainer"] h1.ex-h1, .ex-h1 {{ font-family:{sans}; font-size:34px; line-height:1.2; font-weight:600; color:{navy}; letter-spacing:-.015em; margin:0 0 14px 0; padding:0; max-width:620px; }}
+.ex-p {{ color:#4C5862; font-size:16px; line-height:1.6; max-width:580px; margin:0 0 18px 0; }}
+.ex-flow {{ display:flex; flex-wrap:wrap; align-items:stretch; gap:6px; margin:4px 0 20px 0; }}
+.ex-flow span {{ background:{card}; border:1px solid {line}; border-radius:6px; padding:5px 9px; font-size:12.5px; color:{navy}; }}
+.ex-flow span b {{ display:block; font-weight:600; }} .ex-flow span i {{ display:block; font-style:normal; font-size:11px; color:{muted}; margin-top:1px; }}
+.ex-flow em {{ font-style:normal; color:{terra}; align-self:center; }}
+.ex-cap {{ font-size:12px; color:{muted}; margin-top:2px; }}
+.ex-cards {{ display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin:26px 0 30px 0; border-top:1px solid {line}; border-bottom:1px solid {line}; }}
+.ex-cards.ex7 {{ grid-template-columns:repeat(7,1fr); }}
+.ex-card {{ padding:16px 18px 16px 18px; border-right:1px solid {line}; animation:exup .45s ease both; position:relative; transition:background .2s; }}
+.ex-card:last-child {{ border-right:none; }} .ex-card:hover {{ background:{card}; }}
+.ex-card.gold .ex-num {{ color:#9A6E1C; }} .ex-card.green .ex-num {{ color:{green}; }} .ex-card.terra .ex-num {{ color:{terra}; }}
+.ex-num {{ font-size:32px; color:{navy}; line-height:1.15; margin:4px 0 4px 0; font-weight:500; }}
 @property --n {{ syntax:'<integer>'; initial-value:0; inherits:false; }}
-.ex-count {{ --n:0; animation:excount 1.4s cubic-bezier(.2,.7,.2,1) forwards; counter-reset:n var(--n); }} .ex-count::after {{ content:counter(n); }}
+.ex-in {{ display:inline-block; animation:exup .7s cubic-bezier(.2,.7,.2,1) both; }}
 @keyframes excount {{ to {{ --n:var(--to); }} }}
-@keyframes exup {{ from {{ opacity:0; transform:translateY(8px); }} to {{ opacity:1; transform:none; }} }}
+@keyframes exup {{ from {{ opacity:0; transform:translateY(6px); }} to {{ opacity:1; transform:none; }} }}
 @keyframes exfade {{ from {{ opacity:0; }} to {{ opacity:1; }} }}
 @keyframes exgrow {{ from {{ width:0; }} }}
-.ex-sec {{ font-size:11px; font-weight:800; letter-spacing:.16em; color:{ink}; margin:22px 0 6px 0; display:flex; align-items:center; gap:8px; }}
-.ex-sec::before {{ content:''; width:18px; height:2px; background:{saffron}; display:inline-block; }}
-[class*="st-key-exrank_"] {{ background:#fff; border-radius:12px; padding:10px 16px !important; margin-bottom:8px; transition:box-shadow .25s, transform .25s; animation:exup .5s ease both; }}
-[class*="st-key-exrank_"]:hover {{ box-shadow:0 10px 24px rgba(14,26,51,.08); transform:translateX(3px); }}
-.ex-rk {{ font-family:{serif}; font-size:30px; color:{gold}; }} .ex-nm {{ font-weight:700; font-size:16px; color:{ink}; margin-bottom:4px; }}
-.ex-d {{ display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.14em; border:1.5px solid; border-radius:999px; padding:2px 10px; background:rgba(255,255,255,.9); }}
-.ex-bar {{ height:8px; background:#EEE9DD; border-radius:999px; overflow:hidden; margin:2px 0 6px 0; }} .ex-bar span {{ display:block; height:100%; border-radius:999px; animation:exgrow 1.1s cubic-bezier(.2,.7,.2,1) both; }}
-.ex-conv {{ background:#fff; border-radius:12px; padding:14px; border-top:3px solid {green}; min-height:330px; animation:exup .5s ease both; transition:transform .25s; }} .ex-conv:hover {{ transform:translateY(-3px); }}
-.ex-conv.ex-conflict {{ border-top-color:{gold}; }}
-.ex-row {{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:6px 0; border-bottom:1px solid #F0ECE2; }}
-.ex-arrow {{ text-align:center; color:{muted}; font-size:20px; margin:6px 0 4px 0; }}
-.ex-l {{ font-size:10px; font-weight:800; letter-spacing:.1em; padding:2px 8px; border-radius:4px; }}
-.ex-high {{ background:#DDF0E4; color:#1F6B47; }} .ex-medium {{ background:#F6EBCF; color:#7A5A12; }} .ex-low {{ background:#F3E1D9; color:#8A3A1C; }}
-.ex-hr {{ display:grid; grid-template-columns:170px 1fr 44px; gap:10px; align-items:center; font-size:13px; margin:7px 0; }} .ex-hr .ex-bar {{ margin:0; }}
-.st-key-exdecision {{ background:radial-gradient(900px 400px at 90% 10%, #1B2E5C 0%, {navy} 65%); border-radius:16px; padding:30px 34px !important; animation:exfade .6s ease both; }}
-.ex-dgrid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; border-top:1px solid #2A3D68; padding-top:16px; }}
-.ex-dv {{ font-family:{serif}; color:#fff; font-size:28px; }} .ex-ds {{ color:#8FA3C9; font-size:12px; }}
-@media (max-width:1100px) {{ .ex-cards, .ex-cards.ex7 {{ grid-template-columns:repeat(2,1fr); }} .ex-title {{ font-size:48px; }} .ex-dgrid {{ grid-template-columns:repeat(2,1fr); }} }}
-@media (prefers-reduced-motion: reduce) {{ .ex-card, .ex-bar span, [class*="st-key-exrank_"], .ex-conv {{ animation:none !important; }} }}
+.ex-sec {{ font-size:18px; font-weight:600; color:{navy}; margin:26px 0 4px 0; letter-spacing:-.005em; }}
+[class*="st-key-exrank_"] {{ border-bottom:1px solid {line}; padding:12px 6px !important; animation:exup .45s ease both; transition:background .2s; }}
+[class*="st-key-exrank_"]:hover {{ background:{card}; }}
+.ex-rk {{ font-size:22px; color:{muted}; }} .ex-nm {{ font-weight:600; font-size:16px; color:{navy}; margin-bottom:5px; }}
+.ex-d {{ display:inline-block; font-size:11px; font-weight:600; letter-spacing:.05em; border:1.5px solid; border-radius:4px; padding:2px 8px; background:{card}; }}
+.ex-act {{ font-size:11.5px; color:{muted}; margin-left:7px; }}
+.ex-strip {{ display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:{muted}; margin-bottom:6px; }} .ex-strip b {{ color:{navy}; font-weight:500; }}
+.ex-bar {{ height:6px; background:#E7E1D5; border-radius:999px; overflow:hidden; margin:2px 0 7px 0; }} .ex-bar span {{ display:block; height:100%; border-radius:999px; animation:exgrow .9s cubic-bezier(.2,.7,.2,1) both; }}
+.ex-conv {{ background:{card}; border:1px solid {line}; border-radius:8px; padding:14px; border-top:3px solid {green}; min-height:330px; animation:exup .45s ease both; transition:border-color .2s; }}
+.ex-conv:hover {{ border-color:#CBBFA9; }}
+.ex-conv.ex-conflict {{ border-top-color:{terra}; background:#FBF4EC; }}
+.ex-row {{ display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid #EEE8DC; }}
+.ex-arrow {{ text-align:center; color:{muted}; font-size:18px; margin:6px 0 4px 0; }}
+.ex-l {{ font-size:10.5px; font-weight:600; letter-spacing:.06em; padding:2px 8px; border-radius:4px; }}
+.ex-high {{ background:#E3EBE2; color:#3F5E45; }} .ex-medium {{ background:#F6EBD3; color:#6B4A0E; }} .ex-low {{ background:#F5E1DA; color:#7A2E1C; }}
+.ex-hr {{ display:grid; grid-template-columns:190px 1fr 48px; gap:10px; align-items:center; font-size:13px; margin:7px 0; }} .ex-hr .ex-bar {{ margin:0; }} .ex-hr b {{ font-family:{mono}; font-weight:500; }}
+.st-key-exdecision {{ background:{card}; border:1px solid {line}; border-left:4px solid {green}; border-radius:8px; padding:28px 32px !important; animation:exfade .45s ease both; }}
+.ex-dtitle {{ font-size:42px; font-weight:600; color:{navy}; letter-spacing:-.015em; line-height:1.15; }}
+.ex-dgrid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; border-top:1px solid {line}; padding-top:16px; }}
+.ex-dv {{ color:{navy}; font-size:24px; font-weight:600; }} .ex-ds {{ color:{muted}; font-size:12px; }}
+.st-key-exdecision .ex-p {{ max-width:900px; }}
+@media (max-width:1100px) {{ .ex-cards, .ex-cards.ex7 {{ grid-template-columns:repeat(2,1fr); }} .ex-card {{ border-bottom:1px solid {line}; }} [data-testid="stMarkdownContainer"] h1.ex-h1 {{ font-size:29px; }} .ex-dgrid {{ grid-template-columns:repeat(2,1fr); }} }}
+@media (max-width:760px) {{ .st-key-exhero > div, .st-key-exbody > div {{ padding-left:16px; padding-right:16px; }} [data-testid="stMarkdownContainer"] h1.ex-h1 {{ font-size:25px; }} .ex-cards, .ex-cards.ex7 {{ grid-template-columns:1fr; }} .ex-card {{ border-right:none; }} .ex-dtitle {{ font-size:30px; }} }}
+@media (prefers-reduced-motion: reduce) {{ .ex-card, .ex-bar span, [class*="st-key-exrank_"], .ex-conv, .st-key-exhero > div {{ animation:none !important; }} }}
 """
 
 
 def css():
-    return CSS.format(navy=C["navy"], serif=ui.SERIF, saffron=C["blue"], ink=C["ink"], gold=C["gold"], green=C["teal"], muted=C["muted"])
+    return CSS.format(navy=C["navy"], sans=ui.SANS, mono=ui.MONO, paper=C["paper"], card=C["card"], line=C["line"], teal=C["teal"], terra=C["blue"], gold=C["gold"], green=C["green"], muted=C["muted"])

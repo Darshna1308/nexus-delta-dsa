@@ -3,7 +3,7 @@ Run:  streamlit run app.py     (offline: reads out/results.json, out/taxonomy.js
 import streamlit as st
 st.set_page_config(page_title="NEXUS DELTA — Evidence-First Workforce Capability Decision Engine", page_icon="◆", layout="wide", initial_sidebar_state="collapsed")
 
-import config, ui, charts, data, auth, account_ui as AC, culture as CU, exec_ui as EX
+import config, ui, charts, data, auth, account_ui as AC, culture as CU, exec_ui as EX, viz3d
 import decision_engine as de, career, jd_scanner as J, work_dna as W
 from config import C, LABEL, SHORT, CAPS, PAGES, PROV
 
@@ -96,7 +96,7 @@ def evidence_card(b, k, compact=False):
     rows = {r["key"]: r for r in de.build_matrix(b.results)}; r = rows.get(k)
     if not r: ui.err("No evidence available for that capability."); return
     ex = de.explain(b.results, k)
-    ui.md(f"<div class='nd-label'>CAPABILITY</div><div class='nd-val s'>{ui.esc(LABEL[k]).upper()}</div>")
+    ui.md(f"<div class='nd-label'>CAPABILITY</div><div class='nd-val s' style='font-size:22px'>{ui.esc(LABEL[k])}</div>")
     c = st.columns(4)
     with c[0]: ui.stat("INTERNAL SIGNAL", ui.signal_chip(r["internal"]), f"δ = {r['delta']:.2f}" + (f" [{r['ci_lo']:.2f}, {r['ci_hi']:.2f}]" if r.get("ci_lo") is not None else ""))
     with c[1]: ui.stat("MARKET SIGNAL", ui.signal_chip(r["market"]), f"OR {r['OR_primary']:.2f} / {r['OR_wide']:.2f}")
@@ -109,17 +109,17 @@ def evidence_card(b, k, compact=False):
 def page_home(b):
     EX.overview(b, go, open_cap)
     with st.container(key="body"):
-        ui.md("<div class='ex-sec'>THREE LENSES · ONE EVIDENCE ENGINE</div>")
+        ui.md("<div class='ex-sec'>Three lenses · one evidence engine</div>")
         if not b.ok_results: ui.err(f"Evidence data unavailable: {b.errors.get('results', 'results.json missing')}. Run notebooks 01–07 to regenerate out/results.json."); ui.footer(); return
         cs = st.columns(3, gap="medium")
-        paths = [("01 — ORGANISATION", "What capability should we develop?", "Evidence matrix of five capabilities with an auditable verdict.", "CAPABILITY INTELLIGENCE", "OPEN CAPABILITY INTELLIGENCE ›"),
-                 ("02 — STUDENT / PROFESSIONAL", "What should I develop next?", "Priorities from market evidence, role demand and your own levels.", "CAREER INTELLIGENCE", "OPEN CAREER INTELLIGENCE ›"),
-                 ("03 — WORK DNA", "Will this work environment fit me?", "Work-style fit and friction, with the questions to ask the employer.", "WORK DNA", "OPEN WORK DNA ›")]
+        paths = [("01 · Organisation", "What capability should we develop?", "Evidence matrix of five capabilities with an auditable verdict.", "CAPABILITY INTELLIGENCE", "Open capability intelligence ›"),
+                 ("02 · Student / professional", "What should I develop next?", "Priorities from market evidence, role demand and your own levels.", "CAREER INTELLIGENCE", "Open career intelligence ›"),
+                 ("03 · Work DNA", "Will this work environment fit me?", "Work-style fit and friction, with the questions to ask the employer.", "WORK DNA", "Open Work DNA ›")]
         for col, (kick, q, sub, page, cta) in zip(cs, paths):
             with col, st.container(key=f"card_path_{page[:4]}"):
                 ui.md(f"<div class='nd-label' style='color:{C['blue']}'>{kick}</div><div class='nd-val s' style='margin:4px 0 6px 0'>{ui.esc(q)}</div><div class='nd-sub' style='min-height:34px'>{ui.esc(sub)}</div>")
                 st.button(cta, key=f"path_{page[:4]}", on_click=go, args=(page,), type="primary" if page == "CAPABILITY INTELLIGENCE" else "secondary")
-        ui.md(f"<div class='nd-label' style='margin:22px 0 8px 0'>INTELLIGENCE SNAPSHOT — computed from results.json · click to open the evidence</div>")
+        ui.md(f"<div class='ex-sec'>Intelligence snapshot</div><div class='nd-sub' style='margin-bottom:8px'>Computed from results.json · open any tile for its evidence</div>")
         sg = de.top_signals(b.results); tiles = []
         if sg:
             tiles = [("STRONGEST INTERNAL SEPARATOR", LABEL[sg["internal"]["key"]], f"Cliff's δ {sg['internal']['delta']:.2f} · JDS n = 139", sg["internal"]["key"], "jds_effects"),
@@ -131,14 +131,14 @@ def page_home(b):
             with col, st.container(key=f"card_tile_{lab[:6]}{k}"):
                 ui.md(f"<div class='nd-label'>{lab}</div><div class='nd-val s' style='min-height:54px'>{ui.esc(val)}</div><div class='nd-sub' style='min-height:50px'>{ui.esc(sub)}</div>")
                 c1, c2 = st.columns([1.5, 1.2])
-                with c1, st.container(key=f"tile_{lab[:6]}{k}"): st.button("OPEN EVIDENCE ›", key=f"open_{lab[:6]}{k}", on_click=open_cap, args=(k,))
+                with c1, st.container(key=f"tile_{lab[:6]}{k}"): st.button("Open evidence ›", key=f"open_{lab[:6]}{k}", on_click=open_cap, args=(k,))
                 with c2: ui.prov(pk, f"home_{lab[:6]}")
-        ui.md(f"<div class='nd-label' style='margin:24px 0 8px 0'>THE LOOP — one evidence engine behind both lenses</div>")
-        steps = ["MARKET DEMAND", "CAPABILITY EVIDENCE", "INTERNAL SIGNAL", "MARKET SIGNAL", "HEADROOM", "CAREER CONTEXT", "CONFLICT DETECTION", "DEVELOPMENT DECISION", "ROLE / WORK-STYLE FIT", "ACTION"]
+        ui.md(f"<div class='ex-sec'>The evidence engine</div><div class='nd-sub' style='margin-bottom:8px'>One loop behind every lens</div>")
+        steps = ["Market demand", "Capability evidence", "Internal signal", "Market signal", "Headroom", "Career context", "Conflict detection", "Development decision", "Role / work-style fit", "Action"]
         ui.md("<div style='display:flex;flex-wrap:wrap;gap:6px;align-items:center'>" + " <span style='color:#8D99AE'>→</span> ".join(ui.chip(s, "ink" if i in (7, 9) else "grey") for i, s in enumerate(steps)) + "</div>")
         c = st.columns([1, 1, 3])
-        with c[0]: st.button("▶ START 3-MIN DEMO", key="demo_start", on_click=demo_start, type="primary")
-        with c[1]: st.button("HOW WE PROTECT YOU", key="home_protect", on_click=go, args=("ABOUT",))
+        with c[0]: st.button("▶ Start the 3-minute demo", key="demo_start", on_click=demo_start, type="primary")
+        with c[1]: st.button("How NEXUS DELTA protects you", key="home_protect", on_click=go, args=("ABOUT",))
         ui.footer()
 
 
@@ -147,7 +147,10 @@ def page_capability(b):
     with st.container(key="body"):
         ui.header("What should we invest in next?", "One evidence matrix, five capabilities. Click a capability to open the evidence behind its verdict.", "CAPABILITY INTELLIGENCE · ORGANISATION LENS")
         if not b.ok_results: ui.err(f"Evidence data unavailable ({b.errors.get('results', 'results.json missing')}). Run notebooks 01–07."); ui.footer(); return
-        EX.convergence(b); ui.md("<div class='ex-sec' style='margin-top:26px'>CAPABILITY EVIDENCE MATRIX</div>")
+        EX.convergence(b)
+        ui.md("<div class='ex-sec' style='margin-top:26px'>Evidence landscape</div><div class='nd-sub' style='margin-bottom:6px'>Each capability placed by its internal effect (Cliff's δ) and market odds ratio; height is headroom. Select Dashboards & Storytelling to see the evidence conflict.</div>")
+        viz3d.evidence_landscape(b.results, height=470, initial="story" if S.get("cap_sel") == "story" else None)
+        ui.md("<div class='ex-sec' style='margin-top:26px'>Capability evidence matrix</div>")
         rows = de.build_matrix(b.results); dec = b.results.get("decision", {})
         order = {"FUND": 0, "TIED": 0, "FUND WITH REFRAME": 1, "MONITOR": 2, "DEPRIORITISE": 3}
         rows.sort(key=lambda r: (order.get(r["verdict_display"], 4), -r["Ek"]))
@@ -216,8 +219,11 @@ def page_career(b):
             with c[0]: ui.stat("TECHNICAL READINESS", f"{tf['value']}%" if tf["value"] is not None else "—", "coverage of role-required levels")
             with c[1]: ui.stat("POSTINGS ANALYSED", f"{info.get('n_postings','—')}", f"{role}" + (" · small sample" if info.get("small_sample") else ""))
             with c[2]: ui.prov("technical_fit", "career"); ui.prov("role_profiles", "career")
+            ui.md("<div class='nd-label' style='margin-top:10px'>YOUR DEVELOPMENT PATH</div>")
+            _plan = career.priority_plan(b.results, art, role, sc)
+            viz3d.development_path(_plan, height=300)
             ui.md("<div class='nd-label' style='margin-top:10px'>YOUR DEVELOPMENT PRIORITY</div>")
-            for rank, p in enumerate(career.priority_plan(b.results, art, role, sc), 1):
+            for rank, p in enumerate(_plan, 1):
                 with st.container(key=f"card_pr_{p['key']}"):
                     ui.md(f"<div style='display:flex;gap:10px;align-items:center;flex-wrap:wrap'><span class='nd-val s' style='font-size:20px'>{rank}. {ui.esc(p['capability'])}</span>{ui.chip(p['tier'], ui.TIER_KIND[p['tier']])}<span class='nd-sub'>you {p['your_score']:.0f}/5 · gap {p['gap']:.1f}</span></div>"
                           f"<div style='font-size:13px;margin:6px 0 8px 0'><b>WHY</b> &nbsp;{ui.esc(p['why'])}</div>"
@@ -424,7 +430,7 @@ def page_workdna(b):
                 ui.md("<div class='nd-label'>YOUR WORK DNA vs ROLE WORK DNA</div>")
                 you_r = {d: you.get(d, 3.0) for d in W.RADAR_DIMS}; role_r = {d: role[d] for d in W.RADAR_DIMS}
                 st.plotly_chart(charts.dna_radar(you_r, role_r, W.RADAR_DIMS, W.ROLE_DIM_LABEL), width="stretch", config={"displayModeBar": False}, key="dna_radar")
-                ui.md("".join(f"<div class='nd-dnarow'><b>{ui.esc(r['label']).upper()}</b><div class='bar'>ROLE {_bars(r['role'])} {r['role']:.0f}<br>YOU&nbsp; {_bars(r['you'])} {r['you']:.0f}</div><div>{ui.chip(r['status'], ui.STATUS_KIND[r['status']])}</div></div>" for r in cmp["rows"]))
+                ui.md("".join(f"<div class='nd-dnarow'><b>{ui.esc(r['label'])}</b><div class='bar'>ROLE {_bars(r['role'])} {r['role']:.0f}<br>YOU&nbsp; {_bars(r['you'])} {r['you']:.0f}</div><div>{ui.chip(r['status'], ui.STATUS_KIND[r['status']])}</div></div>" for r in cmp["rows"]))
                 ui.prov("work_dna", "graph"); ui.prov("role_dna" if illustrative else "work_signals", "graph2")
             with R:
                 tf = career.technical_fit(scores(), b.artifacts, role=ROLE_PROFILE_TO_CAREER.get(name, S.get("role")), required=J.required_weights(S.jd_result["parsed"]) if (not illustrative and S.jd_result and S.jd_result["ok"]) else None) if (b.ok_roles or not illustrative) else dict(value=None)
@@ -519,12 +525,14 @@ def evidence_rows(R):
 
 def page_evidence(b):
     with st.container(key="body"):
-        ui.header("This is not just a UI.", "Every figure in NEXUS DELTA traces to a dataset, a method, an interval, a notebook and a limitation.", "EVIDENCE · FOR JUDGES")
+        ui.header("Every number has a source.", "Every figure in NEXUS DELTA traces to a dataset, a method, an interval, a notebook and a limitation.", "EVIDENCE · METHOD AND PROVENANCE")
         if not b.ok_results: ui.err("results.json unavailable — run notebooks 01–07."); ui.footer(); return
-        EX.data_quality(b); ui.md("<div class='ex-sec' style='margin-top:26px'>PROVENANCE</div>")
+        ui.md("<div class='ex-sec'>Evidence pipeline</div><div class='nd-sub' style='margin-bottom:6px'>Four datasets, one taxonomy, three signals, one decision. No row-level join anywhere.</div>")
+        viz3d.evidence_pipeline(b.results, height=360)
+        EX.data_quality(b); ui.md("<div class='ex-sec' style='margin-top:26px'>Provenance</div>")
         R = b.results
         ui.md("<div style='display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px'>" + " ".join([
-            ui.chip("PYTHON · EXECUTED (7 Colab notebooks)", "teal"), ui.chip("SQL · EXECUTED (SQLite; MySQL-compatible DDL)", "teal"), ui.chip("SAS · TEMPLATE, NOT EXECUTED", "amber"), ui.chip("STREAMLIT · THIS APP, OFFLINE", "blue")]) + "</div>")
+            ui.chip("PYTHON · EXECUTED (8 Colab notebooks)", "teal"), ui.chip("SQL · EXECUTED (SQLite database)", "teal"), ui.chip("SAS · TEMPLATE, NOT EXECUTED", "amber"), ui.chip("STREAMLIT · THIS APP, OFFLINE", "blue")]) + "</div>")
         ui.md("<div style='display:flex;flex-wrap:wrap;gap:6px;align-items:center'>" + " <span style='color:#8D99AE'>→</span> ".join(ui.chip(s, "ink" if i == 3 else "grey") for i, s in enumerate(["DATA", "EVIDENCE", "INSIGHT", "DECISION", "ACTION"])) + "<span class='nd-sub' style='margin-left:10px'>Four datasets stay separate at row level; they connect through the versioned capability taxonomy — never a fake join.</span></div>")
         rows = evidence_rows(R)
         flt = st.segmented_control("Dataset", ["ALL", "JDS", "Analytics Jobs", "DataScience Jobs", "SDS"], key="ev_filter", default="ALL", required=True, label_visibility="collapsed")
@@ -601,6 +609,8 @@ def page_insights(b):
     with st.container(key="body"):
         ui.header("Where do the signals agree — and where do they fight?", "Internal outcomes, market demand, salary bands and headroom, side by side.", "INSIGHTS · ANALYTICS")
         if not b.ok_results: ui.err("Evidence data unavailable — run notebooks 01–07."); ui.footer(); return
+        ui.md("<div class='ex-sec'>Market intelligence · salary bands by role</div><div class='nd-sub' style='margin-bottom:6px'>Share of each role's postings in each salary band (Analytics Jobs, NB07). Hover a bar for the exact value.</div>")
+        viz3d.market_landscape(b.artifacts, height=420)
         EX.insights(b); ui.footer()
 
 

@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 import config
 from config import C, LABEL, SHORT
 
-FONT = dict(family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif", color=C["ink"], size=12)
-VERDICT_COLOR = {"FUND": C["teal"], "FUND WITH REFRAME": C["amber"], "TIED": C["blue"], "DEPRIORITISE": C["red"], "MONITOR": C["grey"], "INSUFFICIENT EVIDENCE": C["grey"]}
+FONT = dict(family="'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif", color=C["ink"], size=12)
+VERDICT_COLOR = {"FUND": C["green"], "FUND WITH REFRAME": C["blue"], "TIED": C["gold"], "DEPRIORITISE": C["grey"], "MONITOR": C["grey"], "INSUFFICIENT EVIDENCE": C["grey"]}
 BANDS = ["0–3", "3–6", "6–10", "10–15", "15–25", "25–50"]
 
 
@@ -16,8 +16,8 @@ def _base(fig, h=340, margin=None):
 
 
 def _axes(fig, x=None, y=None):
-    fig.update_xaxes(showgrid=True, gridcolor="#E6E2D8", gridwidth=0.6, zeroline=False, linecolor=C["line"], title=dict(text=x or "", font=dict(size=11, color=C["muted"])), tickfont=dict(size=11, color=C["muted"]))
-    fig.update_yaxes(showgrid=True, gridcolor="#E6E2D8", gridwidth=0.6, zeroline=False, linecolor=C["line"], title=dict(text=y or "", font=dict(size=11, color=C["muted"])), tickfont=dict(size=11, color=C["muted"]))
+    fig.update_xaxes(showgrid=True, gridcolor="#E7E1D5", gridwidth=0.6, zeroline=False, linecolor=C["line"], title=dict(text=x or "", font=dict(size=11, color=C["muted"])), tickfont=dict(size=11, color=C["muted"]))
+    fig.update_yaxes(showgrid=True, gridcolor="#E7E1D5", gridwidth=0.6, zeroline=False, linecolor=C["line"], title=dict(text=y or "", font=dict(size=11, color=C["muted"])), tickfont=dict(size=11, color=C["muted"]))
     return fig
 
 
@@ -70,9 +70,9 @@ def market_forest(market_or, h=320):
 def capability_radar(you, target, h=330):
     ks = ["ai_ml", "coding", "maths_stats", "big_data", "story"]; th = [SHORT[k] for k in ks] + [SHORT[ks[0]]]
     fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(r=[target.get(k, 3) for k in ks] + [target.get(ks[0], 3)], theta=th, name="Target level", line=dict(color=C["teal"], width=1.6, dash="dot"), fill="toself", fillcolor="rgba(18,165,148,0.08)"))
-    fig.add_trace(go.Scatterpolar(r=[you.get(k, 3) for k in ks] + [you.get(ks[0], 3)], theta=th, name="Your level", line=dict(color=C["blue"], width=2.4), fill="toself", fillcolor="rgba(47,107,255,0.14)"))
-    fig.update_layout(polar=dict(radialaxis=dict(range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9, color=C["muted"]), gridcolor="#E6E2D8", linecolor="#E6E2D8"), angularaxis=dict(tickfont=dict(size=11, color=C["ink"]), gridcolor="#E6E2D8"), bgcolor="rgba(0,0,0,0)"),
+    fig.add_trace(go.Scatterpolar(r=[target.get(k, 3) for k in ks] + [target.get(ks[0], 3)], theta=th, name="Target level", line=dict(color=C["teal"], width=1.6, dash="dot"), fill="toself", fillcolor="rgba(47,93,98,.10)"))
+    fig.add_trace(go.Scatterpolar(r=[you.get(k, 3) for k in ks] + [you.get(ks[0], 3)], theta=th, name="Your level", line=dict(color=C["blue"], width=2.4), fill="toself", fillcolor="rgba(200,121,65,.12)"))
+    fig.update_layout(polar=dict(radialaxis=dict(range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9, color=C["muted"]), gridcolor="#E7E1D5", linecolor="#E6E2D8"), angularaxis=dict(tickfont=dict(size=11, color=C["ink"]), gridcolor="#E7E1D5"), bgcolor="rgba(0,0,0,0)"),
                       showlegend=True, legend=dict(orientation="h", y=-0.08, x=0.15))
     _base(fig, h, dict(l=30, r=30, t=20, b=30)); fig.update_layout(showlegend=True)
     return fig
@@ -89,10 +89,10 @@ def band_chart(values, title="", color=None, h=240, as_pct=True, highlight_top=T
 def dna_radar(you, role, dims, labels, h=420):
     th = [labels[d] for d in dims] + [labels[dims[0]]]
     fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(r=[role[d] for d in dims] + [role[dims[0]]], theta=th, name="ROLE WORK DNA", line=dict(color=C["teal"], width=2.4), fill="toself", fillcolor="rgba(18,165,148,0.14)"))
-    fig.add_trace(go.Scatterpolar(r=[you[d] for d in dims] + [you[dims[0]]], theta=th, name="YOUR WORK DNA", line=dict(color=C["blue"], width=2.6), fill="toself", fillcolor="rgba(47,107,255,0.14)"))
-    fig.update_layout(polar=dict(radialaxis=dict(range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9, color=C["muted"]), gridcolor="#E6E2D8", linecolor="#E6E2D8"),
-                                 angularaxis=dict(tickfont=dict(size=11, color=C["ink"]), gridcolor="#E6E2D8"), bgcolor="rgba(0,0,0,0)"), legend=dict(orientation="h", y=-0.06, x=0.12))
+    fig.add_trace(go.Scatterpolar(r=[role[d] for d in dims] + [role[dims[0]]], theta=th, name="ROLE WORK DNA", line=dict(color=C["teal"], width=2.4), fill="toself", fillcolor="rgba(47,93,98,.10)"))
+    fig.add_trace(go.Scatterpolar(r=[you[d] for d in dims] + [you[dims[0]]], theta=th, name="YOUR WORK DNA", line=dict(color=C["blue"], width=2.6), fill="toself", fillcolor="rgba(200,121,65,.12)"))
+    fig.update_layout(polar=dict(radialaxis=dict(range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9, color=C["muted"]), gridcolor="#E7E1D5", linecolor="#E6E2D8"),
+                                 angularaxis=dict(tickfont=dict(size=11, color=C["ink"]), gridcolor="#E7E1D5"), bgcolor="rgba(0,0,0,0)"), legend=dict(orientation="h", y=-0.06, x=0.12))
     _base(fig, h, dict(l=50, r=50, t=20, b=40)); fig.update_layout(showlegend=True)
     return fig
 

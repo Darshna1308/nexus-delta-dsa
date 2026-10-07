@@ -19,3 +19,10 @@ SAS file is an unexecuted template. Work DNA, EQ and role profiles are PROPOSED/
 `app.py` pages · `ui.py` styling · `decision_engine.py` verdicts · `career.py` · `jd_scanner.py` · `work_dna.py` · `eq.py` (optional) · `culture.py` · `auth.py` · `vault.py` (encryption) · `out/` results from notebooks · `notebooks/` 01–07 · `tools/` dev scripts · `docs/` approach note.
 
 Team DSA — Anwesha Kar · Darshna Parihar · Saamyaraj Baidya · Chandigarh University · Build For Bharat 2.0
+
+## Visual system (v4)
+- Palette: warm ivory workspace, deep indigo structure, muted teal for evidence, terracotta for action/attention, muted green for FUND/growth, antique gold only for rare high-value insight.
+- Typography: IBM Plex Sans (text) and IBM Plex Mono (δ, OR, percentages, counts), served locally from `static/fonts` (SIL OFL).
+- 3D (Three.js, bundled locally in `static/nd3d.js`, no CDN): India capability map (home), evidence landscape (Capabilities), salary-band landscape (Insights), development path (Career), evidence pipeline (Evidence). Every scene is drawn only from results.json / app_artifacts.json; a table fallback renders when WebGL is unavailable; idle motion stops under prefers-reduced-motion.
+- India outline: @svg-maps/india (CC BY 4.0, Victor Cazanave), showing India's full official boundary. City figures come from notebook 08.
+- Rebuild the 3D bundle after editing `tools/3d/nd3d.src.js`: `cd tools/3d && npm install three@0.186.1 esbuild && ./build.sh`.
