@@ -3,7 +3,7 @@ Run:  streamlit run app.py     (offline: reads out/results.json, out/taxonomy.js
 import streamlit as st
 st.set_page_config(page_title="NEXUS DELTA — Evidence-First Workforce Capability Decision Engine", page_icon="◆", layout="wide", initial_sidebar_state="collapsed")
 
-import config, ui, charts, data, auth, account_ui as AC, culture as CU
+import config, ui, charts, data, auth, account_ui as AC, culture as CU, exec_ui as EX
 import decision_engine as de, career, jd_scanner as J, work_dna as W
 from config import C, LABEL, SHORT, CAPS, PAGES, PROV
 
@@ -107,10 +107,9 @@ def evidence_card(b, k, compact=False):
 
 # ============================================================================ HOME
 def page_home(b):
-    ui.hero("EVIDENCE-FIRST WORKFORCE CAPABILITY DECISION ENGINE",
-            "Know what to build.<br>Know what to learn.<br><em>Know where you can thrive.</em>",
-            "NEXUS DELTA connects market demand, workforce evidence, capability headroom and work-style fit into one transparent decision layer.")
+    EX.overview(b, go, open_cap)
     with st.container(key="body"):
+        ui.md("<div class='ex-sec'>THREE LENSES · ONE EVIDENCE ENGINE</div>")
         if not b.ok_results: ui.err(f"Evidence data unavailable: {b.errors.get('results', 'results.json missing')}. Run notebooks 01–07 to regenerate out/results.json."); ui.footer(); return
         cs = st.columns(3, gap="medium")
         paths = [("01 — ORGANISATION", "What capability should we develop?", "Evidence matrix of five capabilities with an auditable verdict.", "CAPABILITY INTELLIGENCE", "OPEN CAPABILITY INTELLIGENCE ›"),
@@ -148,6 +147,7 @@ def page_capability(b):
     with st.container(key="body"):
         ui.header("What should we invest in next?", "One evidence matrix, five capabilities. Click a capability to open the evidence behind its verdict.", "CAPABILITY INTELLIGENCE · ORGANISATION LENS")
         if not b.ok_results: ui.err(f"Evidence data unavailable ({b.errors.get('results', 'results.json missing')}). Run notebooks 01–07."); ui.footer(); return
+        EX.convergence(b); ui.md("<div class='ex-sec' style='margin-top:26px'>CAPABILITY EVIDENCE MATRIX</div>")
         rows = de.build_matrix(b.results); dec = b.results.get("decision", {})
         order = {"FUND": 0, "TIED": 0, "FUND WITH REFRAME": 1, "MONITOR": 2, "DEPRIORITISE": 3}
         rows.sort(key=lambda r: (order.get(r["verdict_display"], 4), -r["Ek"]))
@@ -521,6 +521,7 @@ def page_evidence(b):
     with st.container(key="body"):
         ui.header("This is not just a UI.", "Every figure in NEXUS DELTA traces to a dataset, a method, an interval, a notebook and a limitation.", "EVIDENCE · FOR JUDGES")
         if not b.ok_results: ui.err("results.json unavailable — run notebooks 01–07."); ui.footer(); return
+        EX.data_quality(b); ui.md("<div class='ex-sec' style='margin-top:26px'>PROVENANCE</div>")
         R = b.results
         ui.md("<div style='display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px'>" + " ".join([
             ui.chip("PYTHON · EXECUTED (7 Colab notebooks)", "teal"), ui.chip("SQL · EXECUTED (SQLite; MySQL-compatible DDL)", "teal"), ui.chip("SAS · TEMPLATE, NOT EXECUTED", "amber"), ui.chip("STREAMLIT · THIS APP, OFFLINE", "blue")]) + "</div>")
@@ -596,6 +597,19 @@ def page_about(b):
         ui.footer()
 
 
+def page_insights(b):
+    with st.container(key="body"):
+        ui.header("Where do the signals agree — and where do they fight?", "Internal outcomes, market demand, salary bands and headroom, side by side.", "INSIGHTS · ANALYTICS")
+        if not b.ok_results: ui.err("Evidence data unavailable — run notebooks 01–07."); ui.footer(); return
+        EX.insights(b); ui.footer()
+
+
+def page_decision(b):
+    with st.container(key="body"):
+        if not b.ok_results: ui.err("Evidence data unavailable — run notebooks 01–07."); ui.footer(); return
+        EX.decision_page(b, go); ui.footer()
+
+
 # ============================================================================ main
 @st.cache_resource(show_spinner=False)
 def _demo_seed():
@@ -609,14 +623,14 @@ def _demo_seed():
 
 def main():
     init_state(); b = data.get_bundle(); _demo_seed()
-    ui.md(ui.css(S.page, S.cap_sel if S.page == "CAPABILITY INTELLIGENCE" else None))
+    ui.md(ui.css(S.page, S.cap_sel if S.page == "CAPABILITY INTELLIGENCE" else None)); ui.md("<style>" + EX.css() + "</style>")
     if not AC.logged_in():
         ui.shell("", go, show_nav=False); AC.login_page(); return
     ui.shell(S.page, go, account=AC.account_chip(), on_logout=AC.logout)
     if S.demo_on: demo_bar()
     for k, e in b.errors.items():
         if k in ("taxonomy", "model", "artifacts"): ui.md(f"<div style='max-width:1320px;margin:6px auto;padding:0 32px'><div class='nd-warn'>Optional data missing — {ui.esc(e)}. The app continues with reduced features.</div></div>")
-    {"HOME": page_home, "CAPABILITY INTELLIGENCE": page_capability, "CAREER INTELLIGENCE": page_career, "JD SCANNER": page_scanner, "WORK DNA": page_workdna, "CULTURE": lambda b: AC.page_culture(b, go), "EVIDENCE": page_evidence, "ABOUT": page_about}[S.page](b)
+    {"HOME": page_home, "CAPABILITY INTELLIGENCE": page_capability, "CAREER INTELLIGENCE": page_career, "JD SCANNER": page_scanner, "WORK DNA": page_workdna, "CULTURE": lambda b: AC.page_culture(b, go), "INSIGHTS": page_insights, "DECISION": page_decision, "EVIDENCE": page_evidence, "ABOUT": page_about}[S.page](b)
 
 
 main()

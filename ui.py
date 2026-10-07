@@ -36,7 +36,7 @@ html, body, [class*="css"], .stApp {{ font-family:{SANS}; color:{C['ink']}; }}
 .st-key-hero > div {{ max-width:1320px; margin:0 auto; padding:34px 32px 38px 32px; }}
 .nd-kicker {{ color:{C['teal']}; font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }}
 .nd-hero h1 {{ font-family:{SERIF}; color:#fff; font-weight:500; font-size:56px; line-height:1.04; letter-spacing:-.015em; margin:8px 0 10px 0; padding:0; }}
-.nd-hero h1 em {{ color:#7FA6FF; font-style:normal; }}
+.nd-hero h1 em {{ color:#F4A259; font-style:normal; }}
 .nd-hero p {{ color:#B8C6E4; font-size:16px; max-width:760px; line-height:1.5; margin:0; }}
 .nd-page-h {{ font-family:{SERIF}; font-weight:500; font-size:38px; line-height:1.08; letter-spacing:-.01em; color:{C['ink']}; margin:2px 0 4px 0; }}
 .nd-q {{ color:{C['muted']}; font-size:15px; margin:0 0 14px 0; }}
@@ -80,6 +80,9 @@ html, body, [class*="css"], .stApp {{ font-family:{SANS}; color:{C['ink']}; }}
 [data-testid="stTextInput"] > div > div, [data-testid="stTextInput"] [data-baseweb="input"] {{ background:#fff !important; border:1px solid #C9C5B8 !important; border-radius:6px !important; }}
 [data-testid="stTextInput"] label p {{ font-size:11px !important; font-weight:700 !important; letter-spacing:.08em; text-transform:uppercase; color:{C['muted']} !important; }}
 .st-key-shell {{ min-height:56px; }}
+[data-testid="stPopoverBody"] [class*="st-key-nav_"] button {{ color:{C['ink']} !important; border:none !important; justify-content:flex-start !important; padding:8px 10px !important; }}
+[data-testid="stPopoverBody"] [class*="st-key-nav_"] button:hover {{ background:{C['blue_soft']} !important; }}
+[data-testid="stPopoverBody"] [class*="st-key-nav_"] button p {{ font-size:13px !important; letter-spacing:0 !important; text-transform:none; }}
 .st-key-logout {{ text-align:right; }} .st-key-logout button {{ color:#9DB0D6 !important; padding:0 !important; min-height:18px !important; border:none !important; background:transparent !important; }} .st-key-logout button p {{ font-size:10px !important; font-weight:700 !important; letter-spacing:.1em; }} .st-key-logout button:hover {{ color:#fff !important; }}
 .st-key-body h2, .st-key-body h3 {{ font-family:{SERIF}; font-weight:500; }}
 [data-testid="stPopover"] button {{ padding:0 8px !important; min-height:0 !important; height:22px !important; font-size:10.5px !important; font-weight:700 !important; letter-spacing:.07em; border-radius:3px !important; width:auto !important; }}
@@ -99,7 +102,7 @@ def esc(s) -> str: return html.escape(str(s))
 
 
 def chip(text: str, kind: str = "grey") -> str:
-    palette = {"teal": (C["teal_soft"], "#0A6B5F"), "blue": (C["blue_soft"], "#1C47B3"), "amber": (C["amber_soft"], "#7A4B00"), "red": (C["red_soft"], "#8A2A17"), "grey": ("#E9E6DD", C["muted"]), "navy": (C["navy"], "#FFFFFF"), "ink": (C["ink"], "#FFFFFF")}
+    palette = {"teal": (C["teal_soft"], "#1F6B47"), "blue": (C["blue_soft"], "#8A4310"), "amber": (C["amber_soft"], "#7A4B00"), "red": (C["red_soft"], "#8A2A17"), "grey": ("#E9E6DD", C["muted"]), "navy": (C["navy"], "#FFFFFF"), "ink": (C["ink"], "#FFFFFF")}
     bg, fg = palette.get(kind, palette["grey"])
     return f"<span class='nd-chip' style='background:{bg};color:{fg}'>{esc(text)}</span>"
 
@@ -164,10 +167,14 @@ def shell(active: str, go, account: str = "", on_logout=None, show_nav: bool = T
         with c0: md("<div class='nd-brand'>NEXUS DELTA<small>EVIDENCE-FIRST CAPABILITY DECISIONS</small></div>")
         with c1:
           if show_nav:
-            cols = st.columns([0.8, 2.15, 2.0, 1.25, 1.1, 1.0, 1.0, 0.8])
-            labels = {"HOME": "HOME", "CAPABILITY INTELLIGENCE": "CAPABILITY INTELLIGENCE", "CAREER INTELLIGENCE": "CAREER INTELLIGENCE", "JD SCANNER": "JD SCANNER", "WORK DNA": "WORK DNA", "CULTURE": "CULTURE", "EVIDENCE": "EVIDENCE", "ABOUT": "ABOUT"}
-            for i, (col, p) in enumerate(zip(cols, PAGES)):
-                with col: st.button(labels[p], key=f"nav_{i}", on_click=go, args=(p,), type="tertiary")
+            from config import TOP_N
+            labels = {"HOME": "OVERVIEW", "EVIDENCE": "EVIDENCE", "CAPABILITY INTELLIGENCE": "CAPABILITIES", "INSIGHTS": "INSIGHTS", "DECISION": "DECISION", "CAREER INTELLIGENCE": "Career Intelligence",
+                      "JD SCANNER": "JD Scanner", "WORK DNA": "Work DNA", "CULTURE": "Culture", "ABOUT": "About"}
+            cols = st.columns([1.1, 1.0, 1.2, 1.0, 1.0, 1.0, 2.2])
+            for i, p in enumerate(PAGES[:TOP_N]):
+                with cols[i]: st.button(labels[p], key=f"nav_{i}", on_click=go, args=(p,), type="tertiary")
+            with cols[TOP_N], st.popover("MORE ▾" if active not in PAGES[TOP_N:] else labels[active].upper() + " ▾", key="nav_more"):
+                for i, p in enumerate(PAGES[TOP_N:], TOP_N): st.button(labels[p], key=f"nav_{i}", on_click=go, args=(p,), width="stretch")
         with c2:
             md(f"<div class='nd-corner'><b>NEXUS DELTA</b> · Team DSA<br>{account or 'Chandigarh University · Build For Bharat 2.0'}</div>")
             if on_logout: st.button("SIGN OUT", key="logout", on_click=on_logout, type="tertiary")

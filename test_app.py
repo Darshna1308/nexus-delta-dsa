@@ -2,6 +2,7 @@
 import os, sys, shutil, tempfile, json
 sys.path.insert(0, "."); os.environ["NEXUS_VAULT_DIR"] = tempfile.mkdtemp(prefix="nxvault_")
 from streamlit.testing.v1 import AppTest
+import config
 
 def fresh(**env):
     for k, v in env.items(): os.environ[k] = v
@@ -17,22 +18,22 @@ def check(name, cond, extra=""):
     results.append((name, bool(cond))); print(("PASS " if cond else "FAIL ") + name + (f"  [{extra}]" if extra and not cond else ""))
 
 # --- every page via nav
-for i, p in enumerate(["HOME", "CAPABILITY INTELLIGENCE", "CAREER INTELLIGENCE", "JD SCANNER", "WORK DNA", "CULTURE", "EVIDENCE", "ABOUT"]):
+for i, p in enumerate(config.PAGES):
     at = fresh(); at = clicks(at, f"nav_{i}"); check(f"page {p} renders", not exc(at) and at.session_state.page == p, exc(at))
 
 # --- capability matrix + drawer
-at = fresh(); at = clicks(at, "nav_1"); at = clicks(at, "cap_maths_stats"); check("drawer selects maths_stats", at.session_state.cap_sel == "maths_stats" and not exc(at), exc(at))
+at = fresh(); at = clicks(at, "nav_2"); at = clicks(at, "cap_maths_stats"); check("drawer selects maths_stats", at.session_state.cap_sel == "maths_stats" and not exc(at), exc(at))
 at = clicks(at, "cap_big_data"); check("drawer big_data", at.session_state.cap_sel == "big_data" and not exc(at))
 # --- home tile opens evidence
 at = fresh(); b = [x for x in at.button if x.key.startswith("open_BIGGES")]; b[0].click(); at.run(); check("home conflict tile opens storytelling evidence", at.session_state.page == "CAPABILITY INTELLIGENCE" and at.session_state.cap_sel == "story" and not exc(at), exc(at))
 # --- student lens: role + scores
-at = fresh(); at = clicks(at, "nav_2")
+at = fresh(); at = clicks(at, "nav_5")
 sc = [x for x in at.get("segmented_control")]; check("career renders controls", len(sc) >= 6, len(sc))
 at.session_state["role"] = "ML Engineer"; at.run(); check("career role switch", not exc(at), exc(at))
 for k in ("ai_ml", "coding", "maths_stats", "big_data", "story"): at.session_state[f"score_{k}"] = 2
 at.run(); check("career scores update", not exc(at), exc(at))
 # --- scanner: empty, bad, sample, short
-at = fresh(); at = clicks(at, "nav_3"); at = clicks(at, "scan_go"); check("scanner empty input handled", not exc(at) and at.session_state.jd_result and not at.session_state.jd_result["ok"], exc(at))
+at = fresh(); at = clicks(at, "nav_6"); at = clicks(at, "scan_go"); check("scanner empty input handled", not exc(at) and at.session_state.jd_result and not at.session_state.jd_result["ok"], exc(at))
 at.session_state["jd_text"] = "hello world, this is not a job description at all but it is longer than forty chars"; at = clicks(at, "scan_go"); check("scanner bad JD handled (warns, no crash)", not exc(at) and at.session_state.jd_result["ok"] and any("data/analytics" in w for w in at.session_state.jd_result["parsed"]["warnings"]), exc(at))
 at.session_state["jd_text"] = "Senior Data Scientist\nBengaluru startup, 5-8 years. Python, SQL, machine learning, Tableau. Fast-paced with tight deadlines and changing priorities."; at = clicks(at, "scan_go")
 r = at.session_state.jd_result; check("scanner good JD: tags+probs+signals", not exc(at) and r["ok"] and r["probs"] is not None and abs(sum(r["probs"]) - 1) < 1e-6 and r["signals"]["ambiguity"]["signal"], exc(at))
@@ -42,7 +43,7 @@ at.session_state["hear_text"] = "Should we fund maths and statistics?"; at = cli
 at.session_state["hear_text"] = "blah blah"; at = clicks(at, "hear_go"); check("hear: unknown intent handled", not exc(at) and not at.session_state._hear_out["intent"]["understood"], exc(at))
 at.session_state["hear_text"] = ""; at = clicks(at, "hear_go"); check("hear: empty handled", not exc(at) and at.session_state._hear_out["kind"] == "empty", exc(at))
 # --- Work DNA: consent gate, full quiz, results, EQ skipped, EQ taken
-at = fresh(); at = clicks(at, "nav_4"); st_ = [x for x in at.button if x.key == "dna_start"][0]; check("work dna start disabled without consent", st_.disabled)
+at = fresh(); at = clicks(at, "nav_7"); st_ = [x for x in at.button if x.key == "dna_start"][0]; check("work dna start disabled without consent", st_.disabled)
 at.session_state["dna_consent"] = True; at.run(); at = clicks(at, "dna_start"); check("work dna quiz screen", at.session_state.dna_stage == "quiz" and not exc(at), exc(at))
 for q in range(15): at = clicks(at, f"dna_a_{q}_{3 + (q % 3)}")
 check("work dna reaches result", at.session_state.dna_stage == "result" and not exc(at), exc(at))
@@ -54,7 +55,7 @@ at.session_state["dna_tab"] = "OPTIONAL EQ"; at.run(); at = clicks(at, "eq_chang
 for role in ["Startup Data Scientist", "Enterprise Data Scientist", "Research Data Scientist", "Analytics Consultant"]:
     at.session_state["dna_tab"] = "YOUR FIT"; at.session_state["dna_role"] = role; at.run(); check(f"role work dna: {role}", not exc(at), exc(at))
 # --- scanner -> Work DNA JD profile
-at = fresh(); at = clicks(at, "nav_3"); at.session_state["jd_text"] = "Data Analyst MIS\nMumbai 2-4 years. Excel, SQL, Power BI, process documentation and compliance."; at = clicks(at, "scan_go")
+at = fresh(); at = clicks(at, "nav_6"); at.session_state["jd_text"] = "Data Analyst MIS\nMumbai 2-4 years. Excel, SQL, Power BI, process documentation and compliance."; at = clicks(at, "scan_go")
 at.session_state["dna_ans"] = {i: 3 for i in range(15)}; at.session_state["dna_stage"] = "result"; at = clicks(at, "sc_use"); check("scanner -> work dna with JD profile", at.session_state.page == "WORK DNA" and at.session_state.dna_role == "From scanned JD" and not exc(at), exc(at))
 at.session_state["dna_tab"] = "ORGANISATION VIEW"; at.run(); check("org view with VERIFY dims", not exc(at), exc(at))
 # --- demo mode all 12 steps
@@ -74,7 +75,7 @@ import importlib, config
 for name, kw in [("missing model", dict(remove=["jd_scanner_m2.joblib"])), ("missing taxonomy", dict(remove=["taxonomy.json"])), ("missing role artifacts", dict(remove=["app_artifacts.json"])),
                  ("missing results", dict(remove=["results.json"])), ("corrupt results", dict(replace={"results.json": "{not json"})), ("incomplete results", dict(replace={"results.json": "{}"}))]:
     os.environ["NEXUS_DATA_DIR"] = with_dir(**kw)
-    for i, p in enumerate(["HOME", "CAPABILITY INTELLIGENCE", "CAREER INTELLIGENCE", "JD SCANNER", "WORK DNA", "CULTURE", "EVIDENCE", "ABOUT"]):
+    for i, p in enumerate(config.PAGES):
         at = AppTest.from_file("app.py", default_timeout=120); at.session_state["guest"] = True; at.run(); at = clicks(at, f"nav_{i}")
         if p == "JD SCANNER":
             at.session_state["jd_text"] = "Data Scientist\nPython, machine learning, SQL, 3-5 years in Pune. Fast-paced."; at = clicks(at, "scan_go")
@@ -140,7 +141,7 @@ except Exception: check("other key cannot read private report", True)
 auth.delete_private(cu, "eq"); check("user can delete private report", auth.load_private(cu, "eq") is None)
 # seed + UI flows
 import seed_demo; seed_demo.run()
-for who, page, expect in [("demo_candidate", 5, "CULTURE RATING"), ("demo_org", 5, "RESPONSES THIS CYCLE"), ("demo_employee", 5, "PART A")]:
+for who, page, expect in [("demo_candidate", 8, "CULTURE RATING"), ("demo_org", 8, "RESPONSES THIS CYCLE"), ("demo_employee", 8, "PART A")]:
     at = AppTest.from_file("app.py", default_timeout=120); at.run(); at.session_state["auth_tab"] = "SIGN IN"; at.run()
     at.text_input(key="li_user").set_value(who); at.text_input(key="li_pw").set_value("Demo#2026pw"); at = clicks(at, "li_go")
     check(f"{who} signs in via UI", not exc(at) and at.session_state.get("user") and at.session_state.user["username"] == who, exc(at))

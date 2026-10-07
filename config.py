@@ -10,8 +10,8 @@ BRAND = dict(product="NEXUS DELTA", tagline="Evidence-First Workforce Capability
              members=["Anwesha Kar", "Darshna Parihar", "Saamyaraj Baidya"])
 
 # palette: dark navy shell, off-white content, electric-blue primary, teal secondary
-C = dict(navy="#0B1730", navy2="#13244A", navy3="#1D3366", blue="#2F6BFF", blue_soft="#DCE7FF", teal="#12A594", teal_soft="#D5F2EE",
-         paper="#F5F3EE", card="#FFFFFF", ink="#0E1A33", muted="#5B6780", line="#DAD6CB", amber="#C98A1B", amber_soft="#FBEFD3",
+C = dict(navy="#0B1730", navy2="#13244A", navy3="#1D3366", blue="#D9701C", blue_soft="#FBE7D3", teal="#2F8F62", teal_soft="#DDF0E4", gold="#B8963E",
+         paper="#FAF7F0", card="#FFFFFF", ink="#0E1A33", muted="#5B6780", line="#DAD6CB", amber="#C98A1B", amber_soft="#FBEFD3",
          red="#C4472E", red_soft="#F8DDD6", grey="#8D99AE")
 
 CAPS = ["maths_stats", "story", "ai_ml", "coding", "big_data"]            # display order used across the app
@@ -19,8 +19,9 @@ LABEL = {"big_data": "Big Data", "maths_stats": "Maths & Statistics", "coding": 
 SHORT = {"big_data": "Big Data", "maths_stats": "Maths & Stats", "coding": "Coding", "ai_ml": "AI & ML", "story": "Storytelling"}
 CAP_BY_LABEL = {v: k for k, v in LABEL.items()}
 
-PAGES = ["HOME", "CAPABILITY INTELLIGENCE", "CAREER INTELLIGENCE", "JD SCANNER", "WORK DNA", "CULTURE", "EVIDENCE", "ABOUT"]
-PAGE_SLUG = {"home": "HOME", "capability": "CAPABILITY INTELLIGENCE", "career": "CAREER INTELLIGENCE", "scanner": "JD SCANNER", "workdna": "WORK DNA", "culture": "CULTURE", "evidence": "EVIDENCE", "about": "ABOUT"}
+PAGES = ["HOME", "EVIDENCE", "CAPABILITY INTELLIGENCE", "INSIGHTS", "DECISION", "CAREER INTELLIGENCE", "JD SCANNER", "WORK DNA", "CULTURE", "ABOUT"]
+TOP_N = 5   # first five in the top bar, the rest under MORE
+PAGE_SLUG = {"home": "HOME", "capability": "CAPABILITY INTELLIGENCE", "career": "CAREER INTELLIGENCE", "scanner": "JD SCANNER", "workdna": "WORK DNA", "insights": "INSIGHTS", "decision": "DECISION", "overview": "HOME", "culture": "CULTURE", "evidence": "EVIDENCE", "about": "ABOUT"}
 
 EVIDENCE_LABELS = {  # label -> (meaning, colour)
     "OBSERVED": ("Counted or measured directly in the supplied data.", C["teal"]),
