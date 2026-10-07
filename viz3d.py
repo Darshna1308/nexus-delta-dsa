@@ -8,18 +8,15 @@ from config import LABEL, SHORT
 ORDER = ["maths_stats", "coding", "ai_ml", "story", "big_data"]
 S5, S6 = "S5 +all controls (primary tax.)", "S6 all controls (wide tax. & population)"
 
-_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-@font-face{font-family:'IBM Plex Sans';src:url(/app/static/fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2');font-weight:400}
-@font-face{font-family:'IBM Plex Sans';src:url(/app/static/fonts/ibm-plex-sans-latin-600-normal.woff2) format('woff2');font-weight:600}
-@font-face{font-family:'IBM Plex Mono';src:url(/app/static/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2');font-weight:400}
-html,body{margin:0;height:100%;background:transparent;overflow:hidden} #r{height:100vh;width:100%}
-</style></head><body><div id="r"></div><script src="/app/static/nd3d.js"></script>"""
+# The scenes are served as a Streamlit custom component (folder nd3d_component/), so Streamlit itself resolves the
+# asset URLs — this works locally and under Streamlit Community Cloud's /~/+/ sub-path alike.
+import streamlit.components.v1 as _components
+from pathlib import Path as _Path
+_COMP = _components.declare_component("nd3d", path=str(_Path(__file__).parent / "nd3d_component"))
 
 
-def _frame(kind: str, data: dict, height: int):
-    payload = json.dumps(data).replace("</", "<\\/")
-    st.iframe(f"{_HEAD}<script>window.ND3D && ND3D.{kind}(document.getElementById('r'), {payload});</script></body></html>", height=height)
+def _frame(kind: str, data: dict, height: int, fallback: str = "3D view unavailable here — the same data is shown in the tables on this page."):
+    _COMP(kind=kind, data=data, fallback=fallback, height=height, key=f"nd3d_{kind}", default=None)
 
 
 def cap_evidence(results: dict) -> list:
@@ -42,7 +39,9 @@ def india_map(results: dict, height=470, initial="all"):
     caps = cap_evidence(results)
     if not cc or not caps: return False
     cities = [dict(name=n, lon=v["lon"], lat=v["lat"], n=v["n"], pct10=v["pct_ge_10LPA"], caps=v["caps"]) for n, v in sorted(cc.items(), key=lambda x: -x[1]["n"])]
-    _frame("india", dict(svg="/app/static/india.svg", cities=cities, caps=caps, initial=initial), height)
+    fb = "<b>Data-role postings by city</b><table><tr><th>City</th><th>Postings</th><th>≥ 10 LPA</th></tr>" + "".join(
+        f"<tr><td>{_html.escape(c['name'])}</td><td>{c['n']:,}</td><td>{c['pct10']:.0f}%</td></tr>" for c in cities) + "</table>"
+    _frame("india", dict(svg="india.svg", cities=cities, caps=caps, initial=initial), height, fb)
     return True
 
 
